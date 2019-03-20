@@ -31,6 +31,28 @@ resource "aws_alb_target_group" "ecs-target-group" {
     }
 }
 
+resource "aws_alb_target_group" "ecs-target-group-https" {
+    name                = "ecs-target-group-https"
+    port                = "443"
+    protocol            = "HTTPS"
+    vpc_id              = "${aws_vpc.test_vpc.id}"
+
+    health_check {
+                path = "/healthcheck"
+                port = "80"
+                protocol = "HTTP"
+                healthy_threshold = 2
+                unhealthy_threshold = 2
+                interval = 5
+                timeout = 4
+                matcher = "200-308"
+    }
+
+    tags {
+      Name = "ecs-target-group-https"
+    }
+}
+
 resource "aws_alb_listener" "alb-listener" {
     load_balancer_arn = "${aws_alb.ecs-load-balancer.arn}"
     port              = "80"
@@ -41,7 +63,7 @@ resource "aws_alb_listener" "alb-listener" {
         type             = "forward"
     }
 }
-resource "aws_lb_listener" "front_end" {
+resource "aws_lb_listener" "alb-listener-https" {
   load_balancer_arn = "${aws_alb.ecs-load-balancer.arn}"
   port              = "443"
   protocol          = "HTTPS"
@@ -50,6 +72,6 @@ resource "aws_lb_listener" "front_end" {
 
   default_action {
     type             = "forward"
-    target_group_arn = "${aws_lb_target_group.ecs-target-group}"
+    target_group_arn = "${aws_lb_target_group.ecs-target-group-https}"
   }
 }
